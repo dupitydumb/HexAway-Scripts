@@ -11,5 +11,7 @@ public enum EnumStateOfBottomCell
 	Camera = 7,
 	LockHighRise = 8,
 	FridgeCan = 9,
-	BirdHouse = 10
+	BirdHouse = 10,
+
+	Void = 11
 }

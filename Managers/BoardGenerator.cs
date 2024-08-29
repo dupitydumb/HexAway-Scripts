@@ -1,7 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using TMPro;
+using System.Linq;
 public class BoardGenerator : MonoBehaviour
 {
     public float cellSpacing;
@@ -65,7 +66,8 @@ public class BoardGenerator : MonoBehaviour
             bottomCell.transform.SetParent(transform);
             bottomCell.row = levelConfig.LevelData.Cells[i].Row;
             bottomCell.column = levelConfig.LevelData.Cells[i].Col;
-
+            int row = levelConfig.LevelData.Cells[i].Row;
+            int column = levelConfig.LevelData.Cells[i].Col;    
             int oddColumn = levelConfig.LevelData.Cells[i].Col % 2;
             if (oddColumn == 0)
             {
@@ -77,15 +79,16 @@ public class BoardGenerator : MonoBehaviour
                 bottomCell.transform.localPosition = new Vector3(levelConfig.LevelData.Cells[i].Col * XtileDistance, 0.0f,
                         levelConfig.LevelData.Cells[i].Row * ZtileDistance + ZtileDistance * 0.5f);
             }
-            
+
             if (levelConfig.LevelData.Cells[i].State == EnumStateOfBottomCell.RV)
                 bottomCell.InitBottomCell(true);
             else
                 bottomCell.InitBottomCell(false);
 
             bottomCell.CreateColumn();
+            bottomCell.gameObject.GetComponentInChildren<TMP_Text>().text = row.ToString() + " / " + column.ToString();
             bottomCellList.Add(bottomCell);
-
+            
             if (Mathf.Abs(bottomCell.column) > widthOfMap)
             {
                 widthOfMap = Mathf.Abs(bottomCell.column);
@@ -97,12 +100,71 @@ public class BoardGenerator : MonoBehaviour
             }
         }
 
+        SetVoidCells();
+        GenerateHexaColumn();
         //Debug.Log("HEIGH OF MAP " + heighOfMap);
         SetCam();
         goalNumber = levelConfig.Goals[0].Target;
         currentMapSlots = levelConfig.LevelData.Cells.Count;
     }
 
+
+    private void SetVoidCells()
+    {
+        int minRow = bottomCellList.Min(cell => cell.row);
+        int maxRow = bottomCellList.Max(cell => cell.row);
+        int minCol = bottomCellList.Min(cell => cell.column);
+        int maxCol = bottomCellList.Max(cell => cell.column);
+
+        foreach (var bottomCell in bottomCellList)
+        {
+            bool isOddColumn = bottomCell.column % 2 != 0;
+
+            if (isOddColumn)
+            {
+                if (bottomCell.row == minRow || bottomCell.row == maxRow - 1 || bottomCell.column == minCol || bottomCell.column == maxCol)
+                {
+                    // Lower the cell y position to make it look like a void cell
+                    bottomCell.transform.position = new Vector3(bottomCell.transform.position.x, -5f, bottomCell.transform.position.z);
+                    bottomCell.isVoid = true;
+                }
+            }
+            if (bottomCell.row == minRow || bottomCell.row == maxRow || bottomCell.column == minCol || bottomCell.column == maxCol)
+            {
+                // Lower the cell y position to make it look like a void cell
+                bottomCell.transform.position = new Vector3(bottomCell.transform.position.x, -5f, bottomCell.transform.position.z);
+                bottomCell.isVoid = true;
+            }
+        }
+    }
+
+    public void GenerateHexaColumn()
+    {
+        Debug.Log("GenerateHexaColumn");
+        levelConfig = Resources.Load("levels/map_" + GameManager.instance.levelIndex.ToString()) as MapDataLevelConfigSO;
+
+        for (int i = 0; i < levelConfig.HexagonConfig.hexaColumnDataList.Count; i++)
+        {
+            HexaColumnData hexaColumnData = levelConfig.HexagonConfig.hexaColumnDataList[i];
+            HexaColumnData hexaDataTemp = new HexaColumnData();
+            hexaDataTemp.axialCoordinates = hexaColumnData.axialCoordinates;
+            hexaDataTemp.cellDirection = hexaColumnData.cellDirection;
+            hexaDataTemp.columnDataList = new List<ColumnData>();
+            for (int j = 0; j < hexaColumnData.columnDataList.Count; j++)
+            {
+                ColumnData columnData = new ColumnData(hexaColumnData.columnDataList[j].colorID, hexaColumnData.columnDataList[j].columnValue);
+                hexaDataTemp.columnDataList.Add(columnData);
+            }
+            //Generate preset hexa column from the level config to the board
+            //Search bottom cell with the same coordinates as the hexa column
+            BottomCell bottomCell = bottomCellList.Find(cell => cell.row == levelConfig.HexagonConfig.hexaColumnDataList[i].axialCoordinates.x && cell.column == levelConfig.HexagonConfig.hexaColumnDataList[i].axialCoordinates.y);
+            HexaColumn hexaColumn = bottomCell.hexaColumn;
+            hexaColumn.CreateColumn(hexaDataTemp);
+            hexaColumn.cellDirection = hexaColumnData.cellDirection;
+            //rename the hexa column gameobject
+            hexaColumn.gameObject.name = "HexaColumnTEST " + i;
+        }
+    }
     public void ClearMap()
     {
         for (int i = 0; i < bottomCellList.Count; i++)

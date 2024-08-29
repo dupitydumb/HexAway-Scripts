@@ -25,4 +25,5 @@ public class MapDataLevelConfigSO : ScriptableObject
 	public DataConfigDiffOfMapLevel[] Thresholds;
 
 	public ConfigMapDataDO LevelData;
+	public HexagonConfig HexagonConfig;
 }

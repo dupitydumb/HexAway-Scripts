@@ -1,9 +1,12 @@
 using System.Collections.Generic;
 using System;
+using UnityEngine;
 
 [Serializable]
 public class HexaColumnData
 {
+    public CELL_DIRECTION cellDirection;
+    public Vector2Int axialCoordinates;
     public List<ColumnData> columnDataList;
 }
 

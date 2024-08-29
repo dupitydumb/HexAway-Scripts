@@ -10,8 +10,6 @@ public class BottomCell : MonoBehaviour
     public int row;
     public int column;
 
-    public int q;
-    public int r;
     //[HideInInspector]
     public HexaColumn hexaColumn;
 
@@ -25,6 +23,7 @@ public class BottomCell : MonoBehaviour
 
     public GameObject lockObj;
 
+    public bool isVoid;
     public bool isLock;
 
     // Start is called before the first frame update
@@ -69,8 +68,6 @@ public class BottomCell : MonoBehaviour
     {
         this.row = row;
         this.column = column;
-        q = column - (row - (row & 1)) / 2;
-        r = row;
     }
 
     public void SelectCell()

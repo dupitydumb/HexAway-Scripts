@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using DG.Tweening;
 using Lofelt.NiceVibrations;
 using UnityEngine;
+using System.Collections;
 
 public class BoardController : MonoBehaviour
 {
@@ -507,30 +508,56 @@ public class BoardController : MonoBehaviour
 
     public void TransferCells(HexaColumn cell1, BottomCell bottom)
     {
-        bottom.CreateColumn();
+        bool isVoid = bottom.isVoid;
         HexaColumn tempColumn = bottom.hexaColumn;
-        tempColumn.currentHexaColumnData.columnDataList = new List<ColumnData>(cell1.currentHexaColumnData.columnDataList);
-        int sizeOfColumn1 = cell1.cellColorList.Count;
-        int sizeOfColumn2 = tempColumn.cellColorList.Count;
-
-        // Move cell1 to tempColumn
-        for (int i = 0; i < sizeOfColumn1; i++)
+        // Check if there is no bottom cell in front of the direction
+        if (tempColumn.hexaCellList.Count > 0)
         {
-            cell1.hexaCellList[i].transform.SetParent(tempColumn.transform);
-            MoveCell(cell1.hexaCellList[i].transform, new Vector3(0, 0.25f * (1 + i), 0), i, sizeOfColumn1 - 1, cell1, tempColumn);
+            //Debug.Log("Temp Column is not null");
+            return;
+
         }
-        tempColumn.hexaCellList = new List<HexaCell>(cell1.hexaCellList);
-        tempColumn.cellColorList = new List<int>(cell1.cellColorList);
-        tempColumn.topColorID = cell1.topColorID;
-        // Remove cell1
-        cell1.EmptyColumnData();
+        StartCoroutine(TransferCellsCoroutine(cell1, tempColumn, isVoid));
 
 
     }
-
+    IEnumerator TransferCellsCoroutine(HexaColumn cell1, HexaColumn cell2, bool isVoid)
+    {
+        int sizeOfColumn1 = cell1.cellColorList.Count;
+        int sizeOfColumn2 = cell2.cellColorList.Count;
+        // Move cell1 to cell2
+        for (int i = 0; i < sizeOfColumn1; i++)
+        {
+            cell1.hexaCellList[i].transform.SetParent(cell2.transform);
+            MoveCell(cell1.hexaCellList[i].transform, new Vector3(0, 0.25f * (1 + i + sizeOfColumn2), 0), i, sizeOfColumn1 - 1, cell1, cell2);
+        }
+        cell2.hexaCellList = new List<HexaCell>(cell1.hexaCellList);
+        cell2.cellColorList = new List<int>(cell1.cellColorList);
+        cell2.currentHexaColumnData = cell1.currentHexaColumnData;
+        cell2.topColorID = cell1.topColorID;
+        cell2.cellDirection = cell1.cellDirection;
+        cell1.EmptyColumnData();
+        if (isVoid)
+        {
+            cell2.EmptyColumnData();
+            //Destroy all children of cell2
+            for (int i = 0; i < cell2.hexaCellList.Count; i++)
+            {
+                GameManager.instance.poolManager.RemoveHexaCell(cell2.hexaCellList[i]);
+            }
+        }
+        yield return new WaitUntil(() => moveCompleted);
+        cell2.MoveColumnToTarget();
+        
+    }
+    bool moveCompleted = false;
+    public void OnMoveComplete()
+    {
+        moveCompleted = true;
+    }
     //Move selected cell to target position, in this case right side of the selected cell
 
-    public static Dictionary<CELL_DIRECTION, int[]> directionMap = new Dictionary<CELL_DIRECTION, int[]>()
+    public static Dictionary<CELL_DIRECTION, int[]> directionMapEven = new Dictionary<CELL_DIRECTION, int[]>()
     {
         {CELL_DIRECTION.UP, new int[2]{1, 0}},
         {CELL_DIRECTION.UP_RIGHT, new int[2]{0 , 1}},
@@ -540,16 +567,69 @@ public class BoardController : MonoBehaviour
         {CELL_DIRECTION.DOWN_LEFT, new int[2]{-1, -1}}
 
     };
+    public static Dictionary<CELL_DIRECTION, int[]> directionMapOdd = new Dictionary<CELL_DIRECTION, int[]>()
+    {
+        {CELL_DIRECTION.UP, new int[2]{1, 0}},
+        {CELL_DIRECTION.UP_RIGHT, new int[2]{1 , 1}},
+        {CELL_DIRECTION.UP_LEFT, new int[2]{1, -1}},
+        {CELL_DIRECTION.DOWN, new int[2]{-1, 0}},
+        {CELL_DIRECTION.DOWN_RIGHT, new int[2]{0, 1}},
+        {CELL_DIRECTION.DOWN_LEFT, new int[2]{0, -1}}
+
+    };
     public BottomCell GetBottomCellByDirection(BottomCell bottomOrigin, CELL_DIRECTION CellDirection)
     {
-        int[] direction = directionMap[CellDirection];
+        int[] direction = null;
+
+        if (bottomOrigin.column % 2 == 0)
+        {
+            if (directionMapEven.ContainsKey(CellDirection))
+            {
+                direction = directionMapEven[CellDirection];
+            }
+            else
+            {
+                Debug.LogError("CellDirection not found in directionMapEven: " + CellDirection);
+                return null;
+            }
+        }
+        else
+        {
+            if (directionMapOdd.ContainsKey(CellDirection))
+            {
+                direction = directionMapOdd[CellDirection];
+            }
+            else
+            {
+                Debug.LogError("CellDirection not found in directionMapOdd: " + CellDirection);
+                return null;
+            }
+        }
+
+        if (GameManager.instance == null)
+        {
+            Debug.LogError("GameManager.instance is null");
+            return null;
+        }
+
+        if (GameManager.instance.boardGenerator == null)
+        {
+            Debug.LogError("GameManager.instance.boardGenerator is null");
+            return null;
+        }
+
+        if (GameManager.instance.boardGenerator.bottomCellList == null)
+        {
+            Debug.LogError("GameManager.instance.boardGenerator.bottomCellList is null");
+            return null;
+        }
+
         BottomCell targetCell = null;
 
         Debug.Log("Direction " + direction[0] + " " + direction[1]);
         for (int i = 0; i < GameManager.instance.boardGenerator.bottomCellList.Count; i++)
         {
-            if (GameManager.instance.boardGenerator.bottomCellList[i].column == bottomOrigin.column + direction[1] &&
-                GameManager.instance.boardGenerator.bottomCellList[i].row == bottomOrigin.row + direction[0])
+            if (GameManager.instance.boardGenerator.bottomCellList[i].row == bottomOrigin.row + direction[0] && GameManager.instance.boardGenerator.bottomCellList[i].column == bottomOrigin.column + direction[1])
             {
                 targetCell = GameManager.instance.boardGenerator.bottomCellList[i];
                 break;
@@ -574,7 +654,7 @@ public class BoardController : MonoBehaviour
     
     public void MoveCell(Transform cell, Vector3 targetPos, int queue, int lastQueue, HexaColumn cell1, HexaColumn cell2)
     {
-
+        moveCompleted = false;
         Debug.Log("Move Cell To " + targetPos);
 
         List<Vector3> arcPoint = new List<Vector3>();
@@ -589,6 +669,7 @@ public class BoardController : MonoBehaviour
             AudioManager.instance.columnJumpSfx.Play();
             if (queue == lastQueue)
             {
+                OnMoveComplete();
                 //Debug.Log("End Transfer");
                 cell1.Pop(cell2);
                 cell2.Push();

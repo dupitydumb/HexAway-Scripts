@@ -56,7 +56,7 @@ public class HexaColumn : MonoBehaviour
     // Start is called before the first frame update
 
     //Direction map with 2 vectors for each direction
-    public static Dictionary<CELL_DIRECTION, int[]> directionMap = new Dictionary<CELL_DIRECTION, int[]>()
+    public static Dictionary<CELL_DIRECTION, int[]> directionMapEven = new Dictionary<CELL_DIRECTION, int[]>()
     {
         {CELL_DIRECTION.UP, new int[2]{1, 0}},
         {CELL_DIRECTION.UP_RIGHT, new int[2]{0 , 1}},
@@ -64,6 +64,16 @@ public class HexaColumn : MonoBehaviour
         {CELL_DIRECTION.DOWN, new int[2]{-1, 0}},
         {CELL_DIRECTION.DOWN_RIGHT, new int[2]{-1, 1}},
         {CELL_DIRECTION.DOWN_LEFT, new int[2]{-1, -1}}
+
+    };
+    public static Dictionary<CELL_DIRECTION, int[]> directionMapOdd = new Dictionary<CELL_DIRECTION, int[]>()
+    {
+        {CELL_DIRECTION.UP, new int[2]{1, 0}},
+        {CELL_DIRECTION.UP_RIGHT, new int[2]{1 , 1}},
+        {CELL_DIRECTION.UP_LEFT, new int[2]{1, -1}},
+        {CELL_DIRECTION.DOWN, new int[2]{-1, 0}},
+        {CELL_DIRECTION.DOWN_RIGHT, new int[2]{0, 1}},
+        {CELL_DIRECTION.DOWN_LEFT, new int[2]{0, -1}}
 
     };
     void Start()
@@ -91,6 +101,56 @@ public class HexaColumn : MonoBehaviour
                         //Move cell
                         BoardController controller = GameManager.instance.boardController;
                         controller.TransferCells(this, upCell);
+                    }
+                }
+                break;
+            case CELL_DIRECTION.UP_RIGHT:
+                {
+                    BottomCell upRightCell = GameManager.instance.boardController.GetBottomCellByDirection(currentBottomCell, CELL_DIRECTION.UP_RIGHT);
+                    if (upRightCell != null)
+                    {
+                        BoardController controller = GameManager.instance.boardController;
+                        controller.TransferCells(this, upRightCell);
+                    }
+                }
+                break;
+            case CELL_DIRECTION.UP_LEFT:
+                {
+                    BottomCell upLeftCell = GameManager.instance.boardController.GetBottomCellByDirection(currentBottomCell, CELL_DIRECTION.UP_LEFT);
+                    if (upLeftCell != null)
+                    {
+                        BoardController controller = GameManager.instance.boardController;
+                        controller.TransferCells(this, upLeftCell);
+                    }
+                }
+                break;
+            case CELL_DIRECTION.DOWN:
+                {
+                    BottomCell downCell = GameManager.instance.boardController.GetBottomCellByDirection(currentBottomCell, CELL_DIRECTION.DOWN);
+                    if (downCell != null)
+                    {
+                        BoardController controller = GameManager.instance.boardController;
+                        controller.TransferCells(this, downCell);
+                    }
+                }
+                break;
+            case CELL_DIRECTION.DOWN_RIGHT:
+                {
+                    BottomCell downRightCell = GameManager.instance.boardController.GetBottomCellByDirection(currentBottomCell, CELL_DIRECTION.DOWN_RIGHT);
+                    if (downRightCell != null)
+                    {
+                        BoardController controller = GameManager.instance.boardController;
+                        controller.TransferCells(this, downRightCell);
+                    }
+                }
+                break;
+            case CELL_DIRECTION.DOWN_LEFT:
+                {
+                    BottomCell downLeftCell = GameManager.instance.boardController.GetBottomCellByDirection(currentBottomCell, CELL_DIRECTION.DOWN_LEFT);
+                    if (downLeftCell != null)
+                    {
+                        BoardController controller = GameManager.instance.boardController;
+                        controller.TransferCells(this, downLeftCell);
                     }
                 }
                 break;
