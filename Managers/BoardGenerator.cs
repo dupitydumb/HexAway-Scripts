@@ -33,6 +33,8 @@ public class BoardGenerator : MonoBehaviour
 
     public List<BottomCell> bottomCellList;
 
+    public List<GameObject> hexaColumnList;
+
     // Start is called before the first frame update
     void Start()
     {
@@ -97,6 +99,12 @@ public class BoardGenerator : MonoBehaviour
             if (Mathf.Abs(bottomCell.row) > heighOfMap)
             {
                 heighOfMap = Mathf.Abs(bottomCell.row);
+            }
+
+            if (levelConfig.LevelData.Cells[i].State == EnumStateOfBottomCell.Void)
+            {
+                bottomCell.transform.position = new Vector3(bottomCell.transform.position.x, -5f, bottomCell.transform.position.z);
+                bottomCell.isVoid = true;
             }
         }
 
@@ -163,6 +171,16 @@ public class BoardGenerator : MonoBehaviour
             hexaColumn.cellDirection = hexaColumnData.cellDirection;
             //rename the hexa column gameobject
             hexaColumn.gameObject.name = "HexaColumnTEST " + i;
+
+            //add all child of the hexa column to the list
+            for (int j = 0; j < hexaColumn.hexaCellList.Count; j++)
+            {
+                hexaColumnList.Add(hexaColumn.hexaCellList[j].gameObject);
+            }
+            for (int j = 0; j < hexaColumn.hexaCellList.Count; j++)
+            {
+                hexaColumn.hexaCellList[j].SetArrow();
+            }
         }
     }
     public void ClearMap()

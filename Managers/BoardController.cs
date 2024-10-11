@@ -521,8 +521,14 @@ public class BoardController : MonoBehaviour
 
 
     }
+    private bool isAbleToMove = true;
     IEnumerator TransferCellsCoroutine(HexaColumn cell1, HexaColumn cell2, bool isVoid)
     {
+        if (!isAbleToMove)
+        {
+            yield break;
+        }
+        isAbleToMove = false;
         int sizeOfColumn1 = cell1.cellColorList.Count;
         int sizeOfColumn2 = cell2.cellColorList.Count;
         // Move cell1 to cell2
@@ -536,14 +542,36 @@ public class BoardController : MonoBehaviour
         cell2.currentHexaColumnData = cell1.currentHexaColumnData;
         cell2.topColorID = cell1.topColorID;
         cell2.cellDirection = cell1.cellDirection;
-        cell1.EmptyColumnData();
+        if (cell1 != null)
+        {
+            cell1.EmptyColumnData();
+        }
+        //Wait until the move completed
+        yield return new WaitUntil(() => moveCompleted);
+        isAbleToMove = true;
         if (isVoid)
         {
-            cell2.EmptyColumnData();
-            //Destroy all children of cell2
-            for (int i = 0; i < cell2.hexaCellList.Count; i++)
+            foreach (Transform child in cell2.transform)
             {
-                GameManager.instance.poolManager.RemoveHexaCell(cell2.hexaCellList[i]);
+                //Search this gameobject in the hexaColumnList at BoardGenerator.cs
+
+                BoardGenerator bg = GameManager.instance.boardGenerator;
+
+                for (int j = 0; j < bg.hexaColumnList.Count; j++)
+                {
+                    if (bg.hexaColumnList[j] == child.gameObject)
+                    {
+                        bg.hexaColumnList.RemoveAt(j);
+                        break;
+                    }
+                }
+                if (bg.hexaColumnList.Count == 0)
+                {
+                    GameManager.instance.ShowGameWin();
+                }
+                Destroy(child.gameObject);
+                cell2.hexaCellList.Clear();
+                cell2.cellColorList.Clear();
             }
         }
         yield return new WaitUntil(() => moveCompleted);
@@ -626,7 +654,7 @@ public class BoardController : MonoBehaviour
 
         BottomCell targetCell = null;
 
-        Debug.Log("Direction " + direction[0] + " " + direction[1]);
+        // Debug.Log("Direction " + direction[0] + " " + direction[1]);
         for (int i = 0; i < GameManager.instance.boardGenerator.bottomCellList.Count; i++)
         {
             if (GameManager.instance.boardGenerator.bottomCellList[i].row == bottomOrigin.row + direction[0] && GameManager.instance.boardGenerator.bottomCellList[i].column == bottomOrigin.column + direction[1])
@@ -637,7 +665,7 @@ public class BoardController : MonoBehaviour
         }
         if (targetCell != null)
         {
-            Debug.Log("Target Cell " + targetCell.column + " " + targetCell.row);
+            // Debug.Log("Target Cell " + targetCell.column + " " + targetCell.row);
         }
         else
         {
@@ -655,7 +683,6 @@ public class BoardController : MonoBehaviour
     public void MoveCell(Transform cell, Vector3 targetPos, int queue, int lastQueue, HexaColumn cell1, HexaColumn cell2)
     {
         moveCompleted = false;
-        Debug.Log("Move Cell To " + targetPos);
 
         List<Vector3> arcPoint = new List<Vector3>();
 

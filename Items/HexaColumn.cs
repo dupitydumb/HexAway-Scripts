@@ -87,6 +87,12 @@ public class HexaColumn : MonoBehaviour
         MoveColumnToTarget();
     }
 
+    //On Hover
+    void OnMouseEnter()
+    {
+        Debug.Log("OnMouseEnter");
+    }
+
     public void MoveColumnToTarget()
     {
         //Switch case for each direction
@@ -209,7 +215,6 @@ public class HexaColumn : MonoBehaviour
 
     public void Push()
     {
-        Debug.Log("Push");
         int dataCount = currentHexaColumnData.columnDataList.Count;
         int topSize = currentHexaColumnData.columnDataList[dataCount - 1].columnValue;
         for (int i = 0; i < topSize; i++)
@@ -233,7 +238,6 @@ public class HexaColumn : MonoBehaviour
 
     public void Pop(HexaColumn addColumn)
     {
-        Debug.Log("Pop");
         int dataCount = currentHexaColumnData.columnDataList.Count;
         int topSize = currentHexaColumnData.columnDataList[dataCount - 1].columnValue;
 
@@ -254,7 +258,6 @@ public class HexaColumn : MonoBehaviour
     {
         //currentHexaColumnData = addCellColumn.currentHexaColumnData;
 
-        Debug.Log("AddCell");
         currentHexaColumnData.columnDataList = new List<ColumnData>();
         for (int i = 0; i < addCellColumn.currentHexaColumnData.columnDataList.Count; i++)
         {
@@ -280,7 +283,6 @@ public class HexaColumn : MonoBehaviour
 
     public void AddMovingCells(HexaColumn addCellColumn)
     {
-        Debug.Log("Add Moving Cells");
         currentHexaColumnData.columnDataList = new List<ColumnData>();
 
         for (int i = 0; i < addCellColumn.currentHexaColumnData.columnDataList.Count; i++)
@@ -403,7 +405,10 @@ public class HexaColumn : MonoBehaviour
     public void EmptyColumnData()
     {
         hexaCellList.Clear();
-        currentHexaColumnData.columnDataList.Clear();
+        if (currentHexaColumnData != null)
+        {
+            currentHexaColumnData.columnDataList.Clear();
+        }
         cellColorList.Clear();
         topColorID = -1;
         UpdateColliderHeight();
